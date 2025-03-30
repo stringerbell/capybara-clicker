@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
-import capybaraImage from './assets/capybara-transparent.png'
+import Game from './components/Game'
+import Leaderboard from './components/Leaderboard'
 
 interface Upgrade {
   id: string;
@@ -11,20 +12,24 @@ interface Upgrade {
   emoji: string;
 }
 
-function Capybara() {
-  return (
-    <img 
-      src={capybaraImage}
-      alt="Cute Capybara"
-      className="capybara-image"
-    />
-  );
+interface GameState {
+  clicks: number;
+  clicksPerSecond: number;
+  startTime: number;
+  isGameActive: boolean;
+  lastSaveTime: number;
+  nickname: string;
+  upgrades: Upgrade[];
 }
 
-function App() {
-  const [clicks, setClicks] = useState(0);
-  const [clicksPerSecond, setClicksPerSecond] = useState(0);
-  const [upgrades, setUpgrades] = useState<Upgrade[]>([
+const initialGameState: GameState = {
+  clicks: 0,
+  clicksPerSecond: 0,
+  startTime: Date.now(),
+  isGameActive: true,
+  lastSaveTime: 0,
+  nickname: localStorage.getItem('nickname') || '',
+  upgrades: [
     { id: 'orange', name: 'Orange', cost: 10, clickValue: 1, owned: 0, emoji: '🍊' },
     { id: 'lemon', name: 'Lemon', cost: 50, clickValue: 2, owned: 0, emoji: '🍋' },
     { id: 'sombrero', name: 'Sombrero', cost: 200, clickValue: 5, owned: 0, emoji: '👒' },
@@ -33,83 +38,37 @@ function App() {
     { id: 'rainbow', name: 'Rainbow', cost: 25000, clickValue: 50, owned: 0, emoji: '🌈' },
     { id: 'unicorn', name: 'Unicorn', cost: 100000, clickValue: 100, owned: 0, emoji: '🦄' },
     { id: 'dragon', name: 'Dragon', cost: 500000, clickValue: 250, owned: 0, emoji: '🐉' },
-  ]);
+  ]
+};
 
-  const handleClick = () => {
-    const totalClickValue = upgrades.reduce((sum, upgrade) => sum + (upgrade.owned * upgrade.clickValue), 1);
-    setClicks(prev => prev + totalClickValue);
+function App() {
+  const [currentPage, setCurrentPage] = useState<'game' | 'leaderboard'>('game');
+  const [gameState, setGameState] = useState<GameState>(initialGameState);
+
+  const resetGame = () => {
+    setGameState({
+      ...initialGameState,
+      startTime: Date.now(),
+      nickname: gameState.nickname // Preserve the nickname
+    });
   };
-
-  const buyUpgrade = (upgradeId: string) => {
-    const upgrade = upgrades.find(u => u.id === upgradeId);
-    if (!upgrade || clicks < upgrade.cost) return;
-
-    setUpgrades(prev => prev.map(u => {
-      if (u.id === upgradeId) {
-        return { ...u, owned: u.owned + 1 };
-      }
-      return u;
-    }));
-    setClicks(prev => prev - upgrade.cost);
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const totalClicksPerSecond = upgrades.reduce((sum, upgrade) => sum + (upgrade.owned * upgrade.clickValue), 0);
-      setClicksPerSecond(totalClicksPerSecond);
-      setClicks(prev => prev + totalClicksPerSecond);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [upgrades]);
-
-  // Get the highest owned upgrade to determine which capybara image to show
-  const highestOwnedUpgrade = upgrades.reduce((highest, current) => 
-    current.owned > highest.owned ? current : highest
-  );
 
   return (
-    <div className="game-container">
-      <h1>Capybara Clicker</h1>
-      <div className="stats">
-        <p>Clicks: {clicks.toLocaleString()}</p>
-        <p>Clicks per second: {clicksPerSecond.toLocaleString()}</p>
-      </div>
-      
-      <div className="capybara-container">
-        <button 
-          className="capybara"
-          onClick={handleClick}
-        >
-          {highestOwnedUpgrade.owned > 0 ? (
-            <div className="capybara-with-upgrade">
-              <Capybara />
-              <span className="upgrade-emoji">{highestOwnedUpgrade.emoji}</span>
-            </div>
-          ) : (
-            <Capybara />
-          )}
-        </button>
-      </div>
-
-      <div className="upgrades-shop">
-        <h2>Upgrades</h2>
-        {upgrades.map(upgrade => (
-          <div key={upgrade.id} className="upgrade-item">
-            <span>
-              {upgrade.emoji} {upgrade.name} ({upgrade.owned})
-            </span>
-            <button 
-              onClick={() => buyUpgrade(upgrade.id)}
-              disabled={clicks < upgrade.cost}
-            >
-              Buy for {upgrade.cost.toLocaleString()} clicks
-            </button>
-          </div>
-        ))}
-      </div>
+    <div className="app">
+      {currentPage === 'game' ? (
+        <Game 
+          gameState={gameState}
+          setGameState={setGameState}
+          onNavigateToLeaderboard={() => setCurrentPage('leaderboard')}
+          onResetGame={resetGame}
+        />
+      ) : (
+        <Leaderboard 
+          onNavigateToGame={() => setCurrentPage('game')}
+        />
+      )}
     </div>
-  )
+  );
 }
 
 export default App
