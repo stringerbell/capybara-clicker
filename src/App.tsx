@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import capybaraImage from './assets/capybara-transparent.png'
 
 interface Upgrade {
   id: string;
@@ -12,20 +13,11 @@ interface Upgrade {
 
 function Capybara() {
   return (
-    <div className="capybara-body">
-      <div className="capybara-head">
-        <div className="capybara-ear left"></div>
-        <div className="capybara-ear right"></div>
-        <div className="capybara-eye"></div>
-        <div className="capybara-nose"></div>
-        <div className="capybara-mouth"></div>
-      </div>
-      <div className="capybara-belly"></div>
-      <div className="capybara-leg front"></div>
-      <div className="capybara-leg back"></div>
-      <div className="capybara-arm front"></div>
-      <div className="capybara-arm back"></div>
-    </div>
+    <img 
+      src={capybaraImage}
+      alt="Cute Capybara"
+      className="capybara-image"
+    />
   );
 }
 
